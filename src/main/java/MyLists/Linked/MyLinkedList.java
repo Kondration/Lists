@@ -3,9 +3,14 @@ package MyLists.Linked;
 import MyInterfaces.ListInterface;
 
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+
 /**
-    Коллекция связный список
-    @param <T> - тип элементов в коллекции
+ * Коллекция связный список
+ *
+ * @param <T> - тип элементов в коллекции
  */
 public class MyLinkedList<T> implements ListInterface<T> {
 
@@ -18,6 +23,11 @@ public class MyLinkedList<T> implements ListInterface<T> {
      * Первый элемент
      */
     private Node<T> first;
+
+    /**
+     * Элемент для итерирования
+     */
+    private Node<T> iterable;
 
     /**
      * Последний элемент
@@ -33,13 +43,14 @@ public class MyLinkedList<T> implements ListInterface<T> {
 
     /**
      * Метод добавления элемента в конец списка
+     *
      * @param element - элемент для добавления
      */
     @Override
     public void add(T element) {
-        if(size == 0) {
+        if (size == 0) {
             first = new Node<>(element, null);
-        } else if(size == 1) {
+        } else if (size == 1) {
             last = new Node<>(element, null);
             first = new Node<>(first.getElement(), last);
         } else {
@@ -52,20 +63,21 @@ public class MyLinkedList<T> implements ListInterface<T> {
 
     /**
      * Метод добавления элемента в определённое место списка
+     *
      * @param element - элемент для добавления
-     * @param index - место для добавления
+     * @param index   - место для добавления
      * @throws IndexOutOfBoundsException - @param index больше размера списка
-     * @throws IllegalArgumentException - @param index отрицательный
+     * @throws IllegalArgumentException  - @param index отрицательный
      */
     @Override
     public void add(T element, int index) {
         checkIndexForAdd(index);
         Node<T> iterable = first;
-        if(index == size) {
+        if (index == size) {
             add(element);
         } else {
             for (int i = 0; i < index; i++) {
-                if(i == index - 1) {
+                if (i == index - 1) {
                     iterable.setNext(new Node<T>(iterable.getElement(), iterable.getNext()));
                     iterable.setElement(element);
                     break;
@@ -80,9 +92,9 @@ public class MyLinkedList<T> implements ListInterface<T> {
      * Метод добавления элемента в начало списка
      */
     public void addFirst(T element) {
-        if(size == 0) {
+        if (size == 0) {
             first = new Node<>(element, null);
-        } else if(size == 1){
+        } else if (size == 1) {
             last = first;
             first = new Node<>(element, last);
         } else {
@@ -93,20 +105,21 @@ public class MyLinkedList<T> implements ListInterface<T> {
 
     /**
      * Метод получения элемента из определённого места
+     *
      * @param index - место в списке, откуда нужно получить элемент
      * @throws IndexOutOfBoundsException - @param index больше размера списка
-     * @throws IllegalArgumentException - @param index отрицательный
+     * @throws IllegalArgumentException  - @param index отрицательный
      */
     @Override
     public T get(int index) {
         checkIndexForGet(index);
         Node<T> iterable = first;
-        if(index == size - 1) {
+        if (index == size - 1) {
             iterable = last;
         } else {
             for (int i = 0; i < index; i++) {
                 iterable = iterable.getNext();
-                if(i == index - 1) {
+                if (i == index - 1) {
                     break;
                 }
             }
@@ -130,16 +143,17 @@ public class MyLinkedList<T> implements ListInterface<T> {
 
     /**
      * Метод удаления элемента из определённого места
+     *
      * @param index - место в списке, откуда нужно удалить элемент
      * @throws IndexOutOfBoundsException - @param index больше размера списка
-     * @throws IllegalArgumentException - @param index отрицательный
+     * @throws IllegalArgumentException  - @param index отрицательный
      */
     @Override
     public void delete(int index) {
         checkIndexForDelete(index);
         Node<T> iterable = first;
         for (int i = 0; i < index; i++) {
-            if(i == index - 2) {
+            if (i == index - 2) {
                 iterable = new Node<>(iterable.getElement(), iterable.getNext().getNext());
                 break;
             }
@@ -160,34 +174,28 @@ public class MyLinkedList<T> implements ListInterface<T> {
 
     /**
      * Метод сортировки элементов в порядке возрастания
+     *
      * @param comparator - сортировщик элементов
      */
     @Override
     public void sort(Comparator<T> comparator) {
-        Node<T> biggestElement;
-        Node<T> compareElement;
         int decrement = size;
         for (int i = 0; i < size; i++) {
-            biggestElement = null;
-            compareElement = null;
+            Node<T> firstNode = null;
+            Node<T> secondNode = null;
             for (int j = 0; j < decrement; j++) {
-                if(biggestElement == null) {
-                    biggestElement = first;
+                if (decrement - 1 == j) break;
+                if (firstNode == null) firstNode = first;
+                if (secondNode == null) secondNode = firstNode.getNext();
+                if (isFirstBiggest(firstNode, secondNode, comparator)) {
+                    T firstNodeElement = firstNode.getElement();
+                    T secondNodeElement = secondNode.getElement();
+                    firstNode.setElement(secondNodeElement);
+                    secondNode.setElement(firstNodeElement);
                 }
-                if (compareElement == null) {
-                    compareElement = first;
-                }
-                if(comparator.compare(biggestElement.getElement(), compareElement.getElement()) == -1) {
-                    biggestElement = compareElement;
-                } else if(comparator.compare(biggestElement.getElement(), compareElement.getElement()) == 1) {
-                    biggestElement.setNext(compareElement.getNext());
-                    compareElement.setNext(biggestElement);
-                }
-                if(j != decrement - 1) {
-                    compareElement = compareElement.getNext();
-                }
+                firstNode = firstNode.getNext();
+                secondNode = secondNode.getNext();
             }
-            decrement--;
         }
     }
 
@@ -198,11 +206,16 @@ public class MyLinkedList<T> implements ListInterface<T> {
         return size;
     }
 
+    private boolean isFirstBiggest(Node<T> node1, Node<T> node2, Comparator<T> comparator) {
+        return comparator.compare(node1.getElement(), node2.getElement()) == 1;
+    }
+
     /**
      * Метод проверки индекса
+     *
      * @param index - место в списке для добавления элемента
      * @throws IndexOutOfBoundsException - @param index больше размера списка
-     * @throws IllegalArgumentException - @param index отрицательный
+     * @throws IllegalArgumentException  - @param index отрицательный
      */
     private void checkIndexForAdd(int index) {
         if (index > size) {
@@ -214,9 +227,10 @@ public class MyLinkedList<T> implements ListInterface<T> {
 
     /**
      * Метод проверки индекса
+     *
      * @param index - место в списке для удаления элемента
      * @throws IndexOutOfBoundsException - @param index больше размера списка
-     * @throws IllegalArgumentException - @param index отрицательный
+     * @throws IllegalArgumentException  - @param index отрицательный
      */
     private void checkIndexForDelete(int index) {
         if (index > size) {
@@ -228,9 +242,10 @@ public class MyLinkedList<T> implements ListInterface<T> {
 
     /**
      * Метод проверки индекса
+     *
      * @param index - место в списке для получения элемента
      * @throws IndexOutOfBoundsException - @param index больше размера списка
-     * @throws IllegalArgumentException - @param index отрицательный
+     * @throws IllegalArgumentException  - @param index отрицательный
      */
     private void checkIndexForGet(int index) {
         if (index >= size) {
@@ -240,4 +255,54 @@ public class MyLinkedList<T> implements ListInterface<T> {
         }
     }
 
+    /**
+     * Метод получения итератора
+     *
+     * @return Iterator - возвращает итератор по данной коллекции
+     */
+    @Override
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+
+            /**
+             * @return boolean - проверяет, существует ли следующий элемент в коллекции.
+             */
+            @Override
+            public boolean hasNext() {
+                if(iterable == null) return true;
+                return iterable.getNext() != null;
+            }
+
+            /**
+             * @return T - возвращает элемент из коллекции и переключается на следующий.
+             */
+            @Override
+            public T next() {
+                if(iterable == null) {
+                    iterable = first;
+                } else {
+                    iterable = iterable.getNext();
+                }
+                return iterable.getElement();
+            }
+        };
+    }
+
+    /**
+     * Метод проведения какой-либо операции над всеми элементами в коллекции
+     * @param action - принимает потребителя, которому необходимы элементы из коллекции.
+     */
+    @Override
+    public void forEach(Consumer<? super T> action) {
+        ListInterface.super.forEach(action);
+    }
+
+    /**
+     * Метод разделения итерирования
+     * @return Spliterator - возвращает базовый сплитератор
+     */
+    @Override
+    public Spliterator<T> spliterator() {
+        return ListInterface.super.spliterator();
+    }
 }

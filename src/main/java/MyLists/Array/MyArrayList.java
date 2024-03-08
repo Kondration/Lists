@@ -3,6 +3,10 @@ package MyLists.Array;
 import MyInterfaces.ListInterface;
 
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+
 /**
  Коллекция список на основе динамического массива
  @param <T> - тип элементов в коллекции
@@ -28,6 +32,11 @@ public class MyArrayList<T> implements ListInterface<T> {
      * Массив элементов списка
      */
     private T[] elements;
+
+    /**
+     * Указатель на элемент для итератора
+     */
+    private int iterable = 0;
 
     /**
      * Конструктор по умолчанию
@@ -120,16 +129,19 @@ public class MyArrayList<T> implements ListInterface<T> {
                     biggestElement = elements[j];
                     continue;
                 }
-                if(comparator.compare(biggestElement, elements[j]) == -1) {
-                    biggestElement = elements[j];
-                } else if(comparator.compare(biggestElement, elements[j]) == 1) {
+                if(isFirstBiggest(biggestElement, elements[j], comparator)) {
                     elements[j - 1] = elements[j];
                     elements[j] = biggestElement;
+                } else {
+                    biggestElement = elements[j];
                 }
             }
             decrement--;
         }
+    }
 
+    private boolean isFirstBiggest(T o1, T o2, Comparator<T> comparator) {
+        return comparator.compare(o1, o2) == 1;
     }
 
     /**
@@ -213,5 +225,54 @@ public class MyArrayList<T> implements ListInterface<T> {
         } else if (index < 0) {
             throw new IllegalArgumentException("Cannot add an element to position " + index + ". Index is a negative number");
         }
+    }
+
+    /**
+     * Метод получения итератора
+     *
+     * @return Iterator - возвращает итератор по данной коллекции
+     */
+    @Override
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+
+            /**
+             * @return boolean - проверяет, существует ли следующий элемент в коллекции.
+             */
+            @Override
+            public boolean hasNext() {
+                if(iterable >= elementsCount) {
+                    iterable = 0;
+                    return false;
+                }
+                return elements[iterable] != null;
+            }
+
+            /**
+             * @return T - возвращает элемент из коллекции и переключается на следующий.
+             */
+            @Override
+            public T next() {
+                return elements[iterable++];
+            }
+        };
+    }
+
+    /**
+     * Метод проведения какой-либо операции над всеми элементами в коллекции
+     * @param action - принимает потребителя, которому необходимы элементы из коллекции.
+     */
+    @Override
+    public void forEach(Consumer<? super T> action) {
+        ListInterface.super.forEach(action);
+    }
+
+    /**
+     * Метод разделения итерирования
+     * @return Spliterator - возвращает базовый сплитератор
+     */
+    @Override
+    public Spliterator<T> spliterator() {
+        return ListInterface.super.spliterator();
     }
 }
