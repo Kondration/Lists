@@ -270,6 +270,10 @@ public class MyLinkedList<T> implements ListInterface<T> {
             @Override
             public boolean hasNext() {
                 if(iterable == null) return true;
+                if(iterable == last) {
+                    iterable = null;
+                    return false;
+                }
                 return iterable.getNext() != null;
             }
 
